@@ -98,45 +98,51 @@ void TNC::xmitStart(char *szDest, char destSSID, char *szCall, char callSSID, ch
   
   xmitChar(0x03);    //Control Byte
   xmitChar(0xF0);    //PID    
+  _iSZBody = _iSZLen + 1;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void TNC::xmitEnd(void) {
+void TNC::xmitEnd(bool bXmit) {
 
-  if (_modulateInternally) {
-    //we are using the internal modulator
-  	
-    //kick off the transmission
-    _iTxState = 0;
-    _iSZPos = 0;
+  if(bXmit) {
+    if (_modulateInternally) {
+      //we are using the internal modulator
+
+      //kick off the transmission
+      _iTxState = 0;
+      _iSZPos = 0;
+
+      _iTxDelayRemaining = TX_DELAY_LEN;
     
-    _iTxDelayRemaining = TX_DELAY_LEN;
-  
-    _CRC = 0xFFFF;    //init the CRC variable
+      _CRC = 0xFFFF;    //init the CRC variable
+
+      digitalWrite(_pinPTT, HIGH);    //push the PTT
+
+      _startTimer1ISR();
     
-    digitalWrite(_pinPTT, HIGH);    //push the PTT
-    
-    _startTimer1ISR();
-  
-    //wait for the state machine to get to a State 5, which is when it shuts down the transmitter.
-    while (_iTxState != 5) {
-      delay(100);    //just wait patiently until the packet is done
+      //wait for the state machine to get to a State 5, which is when it shuts down the transmitter.
+      while (_iTxState != 5) {
+        delay(100);    //just wait patiently until the packet is done
+      }
+
+    } else {
+      //we are connecting to an external serial TNC
+      xmitChar('\n');    //terminate the packet with a newline character
+
+
+      Serial.print(F("Sending TNC: "));
+
+      SoftwareSerial KISS(_pinTx, _pinRx);
+      KISS.begin(9600);
+      for (int i=0; i<=_iSZLen; i++) {
+        KISS.print(_szXmit[i]);
+        Serial.print("> ");
+        Serial.println(_szXmit[i], HEX);
+      }
     }
-
-  } else {
-    //we are connecting to an external serial TNC
-    xmitChar('\n');    //terminate the packet with a newline character
-    
-
-    Serial.print(F("Sending TNC: "));
-
-    SoftwareSerial KISS(_pinTx, _pinRx);
-    KISS.begin(9600);
-    for (int i=0; i<=_iSZLen; i++) {
-      KISS.print(_szXmit[i]);
-      Serial.print("> ");
-      Serial.println(_szXmit[i], HEX);
-    } 
   }
+  xmitString(" bXmit=");
+  xmitFloat(bXmit ? 1.0:0.0);
+  Serial.println(_szXmit + _iSZBody);
   xmitFlush();		//re-init the SZ back to zero.
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

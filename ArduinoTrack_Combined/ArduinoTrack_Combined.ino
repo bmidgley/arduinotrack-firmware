@@ -378,7 +378,7 @@ void setup() {
   oTNC.xmitString(">Project Traveler ArduinoTrack Controller v");
   oTNC.xmitString(FIRMWARE_VERSION);
   oTNC.xmitString(" Initializing...");
-  oTNC.xmitEnd();
+  oTNC.xmitEnd(true);
 
   //see if we're using a uBlox GPS, and if so, init the GPS
   if (Config.GPSType == 1) {
@@ -411,7 +411,7 @@ void loop() {
       annunciate('g');
       oTNC.xmitStart(Config.Destination, Config.DestinationSSID, Config.Callsign, Config.CallsignSSID, Config.Path1, Config.Path1SSID, Config.Path2, Config.Path2SSID, true);
       oTNC.xmitString(">Lost GPS for over 45 seconds!");
-      oTNC.xmitEnd();
+      oTNC.xmitEnd(true);
 
       iLastErrorTxMillis = millis();      //track the fact that we just transmitted
     }
@@ -528,9 +528,10 @@ void loop() {
     break;
   }
 
+  sendPositionSingleLine(bXmit);
+
   if (bXmit) {
     //we're supposed to transmit now
-    sendPositionSingleLine();
 
     timeLastXmit = millis();
     fMaxSpeed = 0;    //reset the max speed to check again this next cycle (Used for Speed-based smart beaconing)
@@ -544,7 +545,7 @@ void loop() {
   }
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void sendPositionSingleLine() {
+void sendPositionSingleLine(bool bXmit) {
   char szTemp[15];    //largest string held should be the longitude
   int i;
   double insideTemp;    //inside air temp
@@ -689,7 +690,7 @@ void sendPositionSingleLine() {
   oTNC.xmitChar(' ');
   oTNC.xmitString(Config.StatusMessage);
 
-  oTNC.xmitEnd();
+  oTNC.xmitEnd(bXmit);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void collectGPSStrings() {

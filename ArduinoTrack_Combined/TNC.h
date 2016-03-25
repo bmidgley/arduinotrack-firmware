@@ -42,7 +42,7 @@ class TNC {
     void initInternal(int pinPTT);
     void initKISS(int pinTx, int pinRx);
     void xmitStart(char *szDest, char destSSID, char *szCall, char callSSID, char *szPath1, char path1SSID, char *szPath2, char path2SSID, bool usePath);
-    void xmitEnd();
+    void xmitEnd(bool bXmit);
     void xmitString(char *sz);
     void xmitChar(char c);
     void xmitFloat(float f);
@@ -65,6 +65,7 @@ class TNC {
     int _pinTx;
     int _pinRx;
     int _pinPTT;
+    int _iSZBody;   //Index of the message body
 
 
 byte _iSZPos = 0;    //Tracks the current byte being modulated out of the modem
